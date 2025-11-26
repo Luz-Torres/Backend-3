@@ -1,0 +1,43 @@
+<div>
+    <section class="welcome-section">
+        <h2>Bienvenido a la Aplicación de Mascotas</h2>
+        <p>Esta plataforma te permite gestionar mascotas y sus dueños de manera sencilla y efectiva.</p>
+
+        <div class="card-container">
+            <div class="card">
+                <h3>Registrar Mascota</h3>
+                <img src="/registrarmascota.png" alt="Registrar Mascota">
+                <p>Añade nuevas mascotas a la plataforma.</p>
+                <a href="/registerPet" class="btn">Registrar</a>
+            </div>
+            <div class="card">
+                <h3>Ver Mascotas</h3>
+                <img src="/mascotas.png" alt="Ver Mascotas">
+                <p>Consulta la lista de mascotas registradas.</p>
+                <a href="/pets" class="btn">Ver Mascotas</a>
+            </div>
+            <div class="card">
+                <h3>Ver Perfil tu Perfil</h3>
+                <img src="/tumascota.png" alt="Ver Perfil de Mascota">
+                <p>Consulta tu perfil y el de tu mascota.</p>
+                {{#if isLoggedIn}}
+                <a href="/profile/{{userEmail}}" class="btn">Ver Perfil</a>
+                {{else}}
+                <a href="/login" class="btn">Iniciar Sesión</a>
+                {{/if}}
+            </div>
+            <div class="card">
+                <h3>Nosotros!</h3>
+                <img src="/us.png" alt="Imagen de nosotros">
+                <p>Conoce quienes somos y a que nos dedicamos!</p>
+                <a href="/about" class="btn">Conocenos!</a>
+            </div>
+            <div class="card">
+                <h3>Contactanos!</h3>
+                <img src="/contactanos.png" alt="Contacto con nosotros">
+                <p>Saca tu turno para que conozcamos a tu mascota y podamos ayudarte!</p>
+                <a href="/workingOn" class="btn">Contacto</a>
+            </div>
+        </div>
+    </section>
+</div>

@@ -1,24 +1,55 @@
-import petModel from "./models/Pet.js";
+import { petModel } from '../models/pet.model.js';
 
-export default class Pet {
-
-    get = (params) =>{
-        return petModel.find(params)
+class PetDAO {
+  async createPet(petData){
+    try{
+      const newPet = await petModel.create(petData)
+      return newPet
+    }catch(error){
+      console.log("Error en createPet de pet.dao.js")
+      throw error
     }
+  }
 
-    getBy = (params) =>{
-        return petModel.findOne(params);
+  async getPetById(petId){
+    try{
+      const pet = await petModel.findById(petId).populate('owner').lean()
+      return pet
+    }catch(error){
+      console.log("Error en getPetById de pet.dao.js")
+      throw error
     }
+  }
 
-    save = (doc) =>{
-        return petModel.create(doc);
+  async getAllPets(){
+    try{
+      const pets = await petModel.find().populate('owner').lean()
+      return pets
+    }catch(error){
+      console.log("Error en getAllPets de pet.dao.js")
+      throw error
     }
+  }
 
-    update = (id,doc) =>{
-        return petModel.findByIdAndUpdate(id,{$set:doc})
+  async updatePet(petId, updateData){
+    try{
+      const updatedPet = await petModel.findByIdAndUpdate(petId, updateData, { new: true })
+      return updatedPet
+    }catch(error){
+      console.log("Error en updatePet de pet.dao.js")
+      throw error
     }
+  }
 
-    delete = (id) =>{
-        return petModel.findByIdAndDelete(id);
+  async deletePet(petId){
+    try{
+      const deletedPet = await petModel.findByIdAndDelete(petId)
+      return deletedPet
+    }catch(error){
+      console.log("Error en deletePet de pet.dao.js")
+      throw error
     }
+  }
 }
+
+export const petDao = new PetDAO()

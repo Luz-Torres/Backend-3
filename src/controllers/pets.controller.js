@@ -1,52 +1,118 @@
-import PetDTO from "../dto/Pet.dto.js";
-import { petsService } from "../services/index.js"
-import __dirname from "../utils/index.js";
+import { petDao } from '../dao/pet.dao.js';
+import { userDao } from '../dao/user.dao.js';
+import { petModel } from '../models/pet.model.js';
 
-const getAllPets = async(req,res)=>{
-    const pets = await petsService.getAll();
-    res.send({status:"success",payload:pets})
+class PetController {
+    async createPet(req, res) {
+        const { name, species, age, ownerId, photoURL } = req.body
+        let photo
+        if (photoURL) {
+            photo = ["nophoto.png", photoURL]
+        } else {
+            photo = ["nophoto.png"]
+        }
+        try {
+            const newPet = await petDao.createPet({ name, species, age, owner: ownerId, photo })
+            if (ownerId) {
+                const owner = await userDao.getUserById(ownerId)
+                if (owner) {
+                    owner.pets.push(newPet._id)
+                    await owner.save()
+                }
+            }
+            res.redirect("/")
+        } catch (error) {
+            console.log("Error en createPet de pet.controller.js")
+            console.log(error)
+            res.status(500).json({ message: 'Error al crear la mascota' })
+        }
+    }
+
+    async getPetById(req, res) {
+        const { petId } = req.params
+        try {
+            const pet = await petDao.getPetById(petId)
+            if (!pet) {
+                return res.status(404).json({ message: `Mascota con id ${petId} no encontrada` })
+            }
+            res.render('profilePet', { pet })
+        } catch (error) {
+            console.log("Error en getPetById de pet.controller.js")
+            console.log(error)
+            res.status(500).json({ message: 'Error al obtener la mascota' })
+        }
+    }
+
+    async getAllPets(req, res) {
+        try {
+            const pets = await petDao.getAllPets()
+            res.status(200).json(pets)
+        } catch (error) {
+            console.log("Error en getAllPets de pet.controller.js")
+            console.log(error)
+            res.status(500).json({ message: 'Error al obtener las mascotas' })
+        }
+    }
+
+    async updatePet(req, res) {
+        const { petId } = req.params
+        const updateData = req.body
+
+        try {
+            const pet = await petDao.getPetById(petId)
+            if (!pet) {
+                return res.status(404).json({ message: `Mascota con id ${petId} no encontrada` })
+            }
+            const updatedPet = await petDao.updatePet(petId, updateData)
+            res.status(200).json({ message: 'Mascota actualizada con éxito', pet: updatedPet })
+        } catch (error) {
+            console.log("Error en updatePet de pet.controller.js")
+            console.log(error)
+            res.status(500).json({ message: 'Error al actualizar la mascota' })
+        }
+    }
+
+    async deletePet(req, res) {
+        const { petId } = req.params
+        try {
+            const pet = await petDao.getPetById(petId)
+            if (!pet) {
+                return res.status(404).json({ message: `Mascota con id ${petId} no encontrada` })
+            }
+            const deletedPet = await petDao.deletePet(petId)
+            res.status(200).json({ message: 'Mascota eliminada con éxito' })
+        } catch (error) {
+            console.log("Error en deletePet de pet.controller.js")
+            console.log(error)
+            res.status(500).json({ message: 'Error al eliminar la mascota' })
+        }
+    }
+
+    async assignOwnerToPet(req, res) {
+        const { petId } = req.params
+        const { email } = req.body
+        try {
+            const owner = await userDao.getUserByEmail(email)
+            const pet = await petDao.getPetById(petId)
+            if (!owner) {
+                return res.status(404).json({ message: `Dueño con mail ${email} no encontrado` })
+            }
+            if (!pet) {
+                return res.status(404).json({ message: `Mascota con id ${petId} no encontrada` })
+            }
+            pet.owner = owner._id
+
+            const updatedPet = await petModel.findByIdAndUpdate(petId, { owner: owner._id }, { new: true })
+            owner.pets.push(updatedPet._id)
+            await owner.save()
+            res.redirect("/pets")
+        } catch (error) {
+            console.log("Error en assignOwnerToPet de pet.controller.js")
+            console.log(error)
+            res.status(500).json({ message: 'Error al asignar dueño a la mascota' })
+        }
+    }
+
 }
 
-const createPet = async(req,res)=> {
-    const {name,specie,birthDate} = req.body;
-    if(!name||!specie||!birthDate) return res.status(400).send({status:"error",error:"Incomplete values"})
-    const pet = PetDTO.getPetInputFrom({name,specie,birthDate});
-    const result = await petsService.create(pet);
-    res.send({status:"success",payload:result})
-}
-
-const updatePet = async(req,res) =>{
-    const petUpdateBody = req.body;
-    const petId = req.params.pid;
-    const result = await petsService.update(petId,petUpdateBody);
-    res.send({status:"success",message:"pet updated"})
-}
-
-const deletePet = async(req,res)=> {
-    const petId = req.params.pid;
-    const result = await petsService.delete(petId);
-    res.send({status:"success",message:"pet deleted"});
-}
-
-const createPetWithImage = async(req,res) =>{
-    const file = req.file;
-    const {name,specie,birthDate} = req.body;
-    if(!name||!specie||!birthDate) return res.status(400).send({status:"error",error:"Incomplete values"})
-    console.log(file);
-    const pet = PetDTO.getPetInputFrom({
-        name,
-        specie,
-        birthDate,
-        image:`${__dirname}/../public/img/${file.filename}`
-    });
-    console.log(pet);
-    const result = await petsService.create(pet);
-    res.send({status:"success",payload:result})
-}
-export default {
-    getAllPets,
-    createPet,
-    updatePet,
-    deletePet,
-    createPetWithImage
-}
+export const petController = new PetController()
